@@ -57,6 +57,7 @@ print("\n");
 if (count($logs) > $maxLineSize) {
 	$logs = array_slice($logs, count($logs) - $maxLineSize);
 }
+// V‚µ‚¢‚à‚Ì‚©‚ç‡‚É•\¦‚·‚éB
 $logs = array_reverse($logs);
 foreach ($logs as $log) {
     print htmlspecialchars($log);
