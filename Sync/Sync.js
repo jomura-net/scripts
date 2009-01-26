@@ -2,13 +2,14 @@
  * 指定された2つのフォルダの同期を取ります。
  * srcFolderの内容をdestFolderにミラーリングします。
  *
- * ファイルのコピーには「xcopy /D /S /H /R /K /Y /I」を使用しています。
+ * ファイルのコピーには「xcopy /D /S /E /C /I /H /R /K /Y」を使用しています。
  * 除外ファイルが指定できます。
  *
  *  usage: cscript Sync.js 送り側 受け側
  *         [/EXCLUDE:ファイル1[+ファイル2][+ファイル3]...]
  *
- * author Jomora(http://jomura.net)
+ * author Jomora(kazuhiko@jomura.net http://jomura.net)
+ * version 2009.01.27 空のフォルダもコピーするように変更
  * version 2009.01.08 xcopyオプションをコマンドラインの後ろに変更
  * version 2007.05.01 フォルダ指定をダブルクォートで囲むように変更
  * version 2006.05.13 「ごみ箱へ移動」から「ファイル削除」に変更
@@ -80,7 +81,7 @@ function copy() {
 	if (excludeFileName) {
 		exOpt = " /EXCLUDE:" + excludeFileName + " ";
 	}
-	var commandStr = "xcopy \"" + srcFolderPath + "\" \"" + destFolderPath + "\" /D /S /C /I /H /R /K /Y" + exOpt;
+	var commandStr = "xcopy \"" + srcFolderPath + "\" \"" + destFolderPath + "\" /D /S /E /C /I /H /R /K /Y" + exOpt;
 //	WScript.Echo(commandStr);
 	var oExec = WshShell.Exec(commandStr);
 	while (!oExec.StdOut.AtEndOfStream) {
