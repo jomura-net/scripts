@@ -69,10 +69,17 @@ function deleteFiles(destFolder) {
 }
 
 function deleteFolder(folder) {
+	var folderItemPath = folder.Path.replace(destFolderPath, srcFolderPath);
+	if (!fso.FolderExists(folderItemPath)) {
+		log("[delete folder] " + folder.Path.replace(destFolderPath + "\\", ""));
+		folder.Delete(true);
+	}
+/*
 	if (folder.Files.Count == 0 && folder.SubFolders.Count == 0) {
 		log("[delete folder] " + folder.Path.replace(destFolderPath + "\\", ""));
 		folder.Delete(true);
 	}
+*/
 }
 
 function copy() {
