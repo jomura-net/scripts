@@ -8,15 +8,16 @@
  *  usage: cscript Sync.js 送り側 受け側
  *         [/EXCLUDE:ファイル1[+ファイル2][+ファイル3]...]
  *
- * author Jomora(kazuhiko@jomura.net http://jomura.net)
- * version 2009.01.27 空のフォルダもコピーするように変更
- * version 2009.01.08 xcopyオプションをコマンドラインの後ろに変更
- * version 2007.05.01 フォルダ指定をダブルクォートで囲むように変更
- * version 2006.05.13 「ごみ箱へ移動」から「ファイル削除」に変更
- * version 2006.01.23 ログ出力方式を変更
- * version 2005.09.30 ファイルを削除せず、ごみ箱へ移動するよう変更
- * version 2005.09.20 ログを標準出力するよう変更
- * version 2005.09.19 作成
+ * @author Jomora ( kazuhiko@jomura.net http://jomura.net )
+ * @version 2010.02.09 xcopyの標準エラーを出力するように変更
+ *          2009.01.27 空のフォルダもコピーするように変更
+ *          2009.01.08 xcopyオプションをコマンドラインの後ろに変更
+ *          2007.05.01 フォルダ指定をダブルクォートで囲むように変更
+ *          2006.05.13 「ごみ箱へ移動」から「ファイル削除」に変更
+ *          2006.01.23 ログ出力方式を変更
+ *          2005.09.30 ファイルを削除せず、ごみ箱へ移動するよう変更
+ *          2005.09.20 ログを標準出力するよう変更
+ *          2005.09.19 作成
  */
 
 //**Start Encode**
@@ -91,15 +92,30 @@ function copy() {
 	var commandStr = "xcopy \"" + srcFolderPath + "\" \"" + destFolderPath + "\" /D /S /E /C /I /H /R /K /Y" + exOpt;
 //	WScript.Echo(commandStr);
 	var oExec = WshShell.Exec(commandStr);
-	while (!oExec.StdOut.AtEndOfStream) {
-		line = oExec.StdOut.ReadLine();
-		path = line.replace(srcFolderPath + "\\", "");
-		if (line != path) {
-			log("[create] " + path);
+
+	var errStr;
+	var quit = false;
+	while(true) {
+		while (!oExec.StdOut.AtEndOfStream) {
+			line = oExec.StdOut.ReadLine();
+			path = line.replace(srcFolderPath + "\\", "");
+			if (line != path) {
+				log("[create] " + path);
+			}
 		}
+		while(!oExec.StdErr.AtEndOfStream) {
+			errStr = oExec.StdErr.ReadAll();
+			WScript.StdErr.WriteLine(errStr);
+		}
+		if(quit) {
+			break;
+		}
+		quit = (oExec.Status == 1);
 	}
-	while (oExec.Status == 0) {
-	     WScript.Sleep(100);
+	
+	if (errStr) {
+		//エラー終了
+		WScript.Quit(1);
 	}
 }
 
