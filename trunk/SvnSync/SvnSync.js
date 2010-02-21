@@ -20,7 +20,8 @@
 // [前提4] CheckOutフォルダにnon-versioned-fileがある場合、Commitされてしまいます。
 //
 // @author Jomora ( kazuhiko@jomura.net http://jomura.net/ )
-// @version 2010.02.09 標準エラー出力表示。
+// @version 2010.02.19 svn add時、current folder変更。(不具合対応)
+//          2010.02.09 標準エラー出力表示。
 //          2010.02.09 コミットしない場合もsrcフォルダは削除する。
 //          2010.01.25 初版作成
 
@@ -198,8 +199,13 @@ function svnDelete(path) {
 }
 
 function svnAdd(path) {
-	command = "svn add " + path + " --force";
+	org_path = shell.CurrentDirectory;
+	shell.CurrentDirectory = path;
+
+	command = "svn add . --force";
 	exec(command, false);
+
+	shell.CurrentDirectory = org_path;
 }
 
 function svnCommit(path) {
