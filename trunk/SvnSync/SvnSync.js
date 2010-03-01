@@ -3,8 +3,9 @@
 //   synsyncが使えない状況で活用する。
 //   手動でコミットする場合は、"src"および"dest"フォルダを手動削除すること。
 //
-// usage: cscript //nologo SvnSync.js [/c:] 同期元URL 同期先URL [同期先CheckOutフォルダ]
+// usage: cscript //nologo SvnSync.js [/c:] [/l:] 同期元URL 同期先URL [同期先CheckOutフォルダ]
 //     <options> /c: … 自動コミットする。
+//     <options> /l: … 同期元はローカルフォルダパス。
 //
 // (1) 同期元をexport ->srcFolder
 // (2) 同期先をCheckOut ->destFolder, CheckOut済ならsvn update
@@ -20,7 +21,8 @@
 // [前提4] CheckOutフォルダにnon-versioned-fileがある場合、Commitされてしまいます。
 //
 // @author Jomora ( kazuhiko@jomura.net http://jomura.net/ )
-// @version 2010.02.19 svn add時、current folder変更。(不具合対応)
+// @version 2010.03.01 同期元がexport済の場合にオプション対応
+//          2010.02.19 svn add時、current folder変更。(不具合対応)
 //          2010.02.09 標準エラー出力表示。
 //          2010.02.09 コミットしない場合もsrcフォルダは削除する。
 //          2010.01.25 初版作成
@@ -49,10 +51,14 @@ if (argsUnnamed.length > 2
 var isCommit = WScript.Arguments.Named.Item("c") != null 
 	|| WScript.Arguments.Named.Item("commit") != null;
 
+var isLocalSource = WScript.Arguments.Named.Item("l") != null 
+	|| WScript.Arguments.Named.Item("local") != null;
+
 WScript.Echo("同期元 : " + srcUrl);
 WScript.Echo("同期先 : " + destUrl);
 WScript.Echo("CheckOut Path : " + checkOutFolderPath);
 WScript.Echo("自動commitするか？ : " + isCommit);
+WScript.Echo("同期元はLocalか？ : " + isLocalSource);
 
 //main
 
@@ -61,7 +67,11 @@ deleteWorkFolders(isCommit);
 
 // (1) 同期元をexport ->srcFolder
 var exportFolderPath = "src";
-svnExport(srcUrl, exportFolderPath);
+if (isLocalSource) {
+	var exportFolderPath = srcUrl;
+} else {
+	svnExport(srcUrl, exportFolderPath);
+}
 
 // (2) 同期先をCheckOut ->destFolder, CheckOut済ならsvn update
 if (null == checkOutFolderPath) {
