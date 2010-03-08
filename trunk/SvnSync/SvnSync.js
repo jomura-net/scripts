@@ -3,9 +3,10 @@
 //   synsyncが使えない状況で活用する。
 //   手動でコミットする場合は、"src"および"dest"フォルダを手動削除すること。
 //
-// usage: cscript //nologo SvnSync.js [/c:] [/l:] 同期元URL 同期先URL [同期先CheckOutフォルダ]
+// usage: cscript //nologo SvnSync.js [/c:] [/l:] [/r:{revision}] 同期元URL 同期先URL [同期先CheckOutフォルダ]
 //     <options> /c: … 自動コミットする。
-//     <options> /l: … 同期元はローカルフォルダパス。
+//               /l: … 同期元はローカルフォルダパス。
+//               /r:{revision} … 同期元リビジョン
 //
 // (1) 同期元をexport ->srcFolder
 // (2) 同期先をCheckOut ->destFolder, CheckOut済ならsvn update
@@ -21,7 +22,8 @@
 // [前提4] CheckOutフォルダにnon-versioned-fileがある場合、Commitされてしまいます。
 //
 // @author Jomora ( kazuhiko@jomura.net http://jomura.net/ )
-// @version 2010.03.01 同期元がexport済の場合にオプション対応
+// @version 2010.03.08 同期元revisionを指定可能とした。
+//          2010.03.01 同期元がexport済の場合にオプション対応
 //          2010.02.19 svn add時、current folder変更。(不具合対応)
 //          2010.02.09 標準エラー出力表示。
 //          2010.02.09 コミットしない場合もsrcフォルダは削除する。
@@ -54,11 +56,14 @@ var isCommit = WScript.Arguments.Named.Item("c") != null
 var isLocalSource = WScript.Arguments.Named.Item("l") != null 
 	|| WScript.Arguments.Named.Item("local") != null;
 
+var revision = WScript.Arguments.Named.Item("r");
+
 WScript.Echo("同期元 : " + srcUrl);
 WScript.Echo("同期先 : " + destUrl);
 WScript.Echo("CheckOut Path : " + checkOutFolderPath);
 WScript.Echo("自動commitするか？ : " + isCommit);
 WScript.Echo("同期元はLocalか？ : " + isLocalSource);
+WScript.Echo("同期元revision : " + revision);
 
 //main
 
@@ -70,7 +75,7 @@ var exportFolderPath = "src";
 if (isLocalSource) {
 	var exportFolderPath = srcUrl;
 } else {
-	svnExport(srcUrl, exportFolderPath);
+	svnExport(srcUrl, exportFolderPath, revision);
 }
 
 // (2) 同期先をCheckOut ->destFolder, CheckOut済ならsvn update
@@ -110,8 +115,10 @@ WScript.Quit();
 
 function usage(message) {
 	WScript.Echo(message + "\n\n usage: cscript //nologo SvnSync.js"
-		+ " [/c:] 同期元URL 同期先URL [同期先CheckOutフォルダ]\n"
-		+ "    <options> /c: … 自動コミットする。");
+		+ " [/c:] [/l:] [/r:{revision}] 同期元URL 同期先URL [同期先CheckOutフォルダ]\n"
+		+ "    <options> /c: … 自動コミットする。\n"
+		+ "              /l: … 同期元はローカルフォルダパス。\n"
+		+ "              /r:{revision} … 同期元リビジョン\n");
 	WScript.Quit(1);
 }
 
@@ -158,8 +165,12 @@ function exec(command, display) {
 	}
 }
 
-function svnExport(src_url, dest_path) {
-	command = "svn export " + src_url + " " + dest_path + " --force --non-interactive";
+function svnExport(src_url, dest_path, revision) {
+	rev = "";
+	if (null != revision) {
+		rev = " -r " + revision + " ";
+	}
+	command = "svn export " + rev + src_url + " " + dest_path + " --force --non-interactive";
 	exec(command, false);
 }
 
