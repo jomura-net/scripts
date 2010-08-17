@@ -19,10 +19,11 @@ For Each file In folder.Files
     	timeDiff = DateDiff("h", file.DateLastModified, Now)
     	If timeDiff <= nDiff Then
 			Set stream = fso.OpenTextFile(file)
-			Do While Not stream.AtEndOfStream
-			    str = stream.ReadLine
-			    WScript.StdOut.WriteLine(str)
-			Loop
+'			Do While Not stream.AtEndOfStream
+'			    str = stream.ReadLine
+'			    WScript.StdOut.WriteLine(str)
+'			Loop
+			WScript.StdOut.WriteLine(stream.ReadAll)
 			stream.Close()
     	End If
     End If
