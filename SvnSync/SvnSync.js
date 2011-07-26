@@ -22,7 +22,8 @@
 // [前提4] CheckOutフォルダにnon-versioned-fileがある場合、Commitされてしまいます。
 //
 // @author Jomora ( kazuhiko@jomura.net http://jomura.net/ )
-// @version 2010.03.08 同期元revisionを指定可能とした。
+// @version 2011.07.21 コミットコメントを同期元revisionとした。
+//          2010.03.08 同期元revisionを指定可能とした。
 //          2010.03.01 同期元がexport済の場合にオプション対応
 //          2010.02.19 svn add時、current folder変更。(不具合対応)
 //          2010.02.09 標準エラー出力表示。
@@ -100,8 +101,18 @@ destFolderPath = destFolder.Path;
 deleteFiles(destFolder);
 
 if (isCommit) {
+	// (5.9) commit comment生成
+	var rev = "(local)";
+	if (!isLocalSource) {
+		if (revision) {
+			rev = revision;
+		} else {
+			rev = getHeadRevision(srcUrl);
+		}
+	}
+
 	// (6) svn commit
-	svnCommit(checkOutFolderPath);
+	svnCommit(checkOutFolderPath, "[SvnSync auto commit] source revision: " + rev);
 }
 
 // (7) destFolder, srcFolderを削除
@@ -127,6 +138,7 @@ function deleteWorkFolders(isCommit) {
 		fso.DeleteFolder("src", true);
 	}
 	if (isCommit && fso.FolderExists("dest")) {
+		WScript.Sleep(3000);
 		fso.DeleteFolder("dest", true);
 		WScript.Sleep(3000);
 	}
@@ -229,24 +241,34 @@ function svnAdd(path) {
 	shell.CurrentDirectory = org_path;
 }
 
-function svnCommit(path) {
-	var now = new Date();
-	year = now.getYear();
-	month = now.getMonth() + 1;
-	date = now.getDate();
-	hour = now.getHours();
-	minute = now.getMinutes();
-	second = now.getSeconds();
-	dateStr = year + "/" + TwoDigits(month) + "/" + TwoDigits(date)
-		+ " " + TwoDigits(hour) + ":" + TwoDigits(minute) + ":" + TwoDigits(second);
-
-	command = "svn commit " + path + " -m \"" + dateStr + "\" --non-interactive";
+function svnCommit(path, message) {
+	command = "svn commit " + path + " -m \"" + message + "\" --non-interactive";
 	exec(command, true);
 }
 
-function TwoDigits(number) {
-	if (number < 10) {
-		number = "0" + number;
+function getHeadRevision(path) {
+	var command = "svn info " + path;
+	var oExec = shell.Exec(command);
+
+	var outStr;
+	var errStr;
+	var quit = false;
+	while(true) {
+		while(!oExec.StdOut.AtEndOfStream) {
+			outStr = oExec.StdOut.ReadLine();
+			if (0 == outStr.indexOf("最終変更リビジョン:") || 0 == outStr.indexOf("Last Changed Rev:")) {
+				return outStr.substr(outStr.indexOf(":") + 2);
+			}
+		}
+		while(!oExec.StdErr.AtEndOfStream) {
+			errStr = oExec.StdErr.ReadAll();
+			WScript.StdErr.WriteLine(errStr);
+		}
+		if(quit) {
+			break;
+		}
+		quit = (oExec.Status == 1);
+		WScript.Sleep(100);
 	}
-	return number;
+	return errStr;
 }
