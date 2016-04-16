@@ -9,7 +9,8 @@
  *         [/EXCLUDE:ファイル1[+ファイル2][+ファイル3]...]
  *
  * @author Jomora ( kazuhiko@jomura.net http://jomura.net )
- * @version 2010.02.09 xcopyの標準エラーを出力するように変更
+ * @version 2016.04.17 指定したフォルダ名もログ出力するように変更
+ *          2010.02.09 xcopyの標準エラーを出力するように変更
  *          2009.01.27 空のフォルダもコピーするように変更
  *          2009.01.08 xcopyオプションをコマンドラインの後ろに変更
  *          2007.05.01 フォルダ指定をダブルクォートで囲むように変更
@@ -44,6 +45,8 @@ var srcFolder = fso.GetFolder(srcFolderPath);
 var destFolder = fso.GetFolder(destFolderPath);
 srcFolderPath = srcFolder.Path;
 destFolderPath = destFolder.Path;
+srcParentFolderPath = fso.GetParentFolderName(srcFolderPath);
+destParentFolderPath = fso.GetParentFolderName(destFolderPath);
 
 // メイン
 copy();
@@ -57,7 +60,7 @@ function deleteFiles(destFolder) {
 	for(; !fc.atEnd(); fc.moveNext()) {
 		var srcFilePath = fc.item().Path.replace(destFolderPath, srcFolderPath);
 		if (!fso.FileExists(srcFilePath)) {
-			log("[delete] " + fc.item().Path.replace(destFolderPath + "\\", ""));
+			log("[delete] " + fc.item().Path.replace(destParentFolderPath, ""));
 			fc.item().Delete(true);
 			//remove(fc.item().Path);
 		}
@@ -72,7 +75,7 @@ function deleteFiles(destFolder) {
 function deleteFolder(folder) {
 	var folderItemPath = folder.Path.replace(destFolderPath, srcFolderPath);
 	if (!fso.FolderExists(folderItemPath)) {
-		log("[delete folder] " + folder.Path.replace(destFolderPath + "\\", ""));
+		log("[delete folder] " + folder.Path.replace(destParentFolderPath, ""));
 		folder.Delete(true);
 	}
 /*
@@ -98,7 +101,7 @@ function copy() {
 	while(true) {
 		while (!oExec.StdOut.AtEndOfStream) {
 			line = oExec.StdOut.ReadLine();
-			path = line.replace(srcFolderPath + "\\", "");
+			path = line.replace(srcParentFolderPath, "");
 			if (line != path) {
 				log("[create] " + path);
 			}
